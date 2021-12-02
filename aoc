@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+
+function help() {
+    cat << EOF
+
+aoc - a little helper tool for the "Advent of Code"
+
+Usage:  aoc h|help         this help text
+            l|ls|list [n]  list today's or given day's file(s)
+            d|descr [n]    edit today's or given day's description file
+            e|edit [n]     edit today's or given day's script(s)
+            r|run [n]      run  today's or given day's script(s)
+            t|test [n]     test today's or given day's script(s) with test-input
+            p|pytest [n]   test today's or given day's script(s) via pytest
+            i|ide|tmux     create a simple IDE with the help of tmux
+
+EOF
+}
+
+
+if [ "$#" -eq 0 ] ; then
+    help
+    exit 1
+fi
+
+
+function run_scripts() {
+    echo "---"
+    for script in $scripts ; do
+        ./$script < $input
+        echo "---"
+    done
+}
+
+if [ -z "$2" ] ; then
+    day=$(date +'%d')
+else
+    # leading zeros are eliminated from input (due to octal system trap...)
+    # but there is no additional error checking yet (1..24, no-number etc.)
+    printf -v day "%02i" ${2##*0}
+fi
+
+input=day${day}-input
+
+if [ ! -f "$input" ] ; then
+    echo "No input file '$input' found! Probably day ${day} has not been worked at."
+    exit 2
+fi
+
+scripts=$(ls -1 day${day}[ab].py)
+chmod u+x $scripts
+
+case "$1" in
+    i|ide|tmux) if [[ ! $(type -P tmux) ]] ; then
+                    echo "tmux doesn't seem to be installed!"
+                    echo "Can't create the IDE..."
+                    exit 3
+                fi
+                # put current directory into PATH to be able to execute aoc without ./
+                export PATH=.:$PATH
+
+                tmux has-session -t AOC 2>/dev/null
+                if [ $? -ne 0 ] ; then
+                    tmux new-session -d -s AOC
+                    tmux split-window -t 0 -l 50% -v -d
+                    tmux split-window -t 0 -l 50% -h -d
+                    tmux split-window -t 2 -l 30% -h -d less -m day${day}*testinput
+                    tmux send-keys -t 0 aoc ENTER
+                    tmux send-keys -t 1 python3 ENTER
+                    tmux send-keys -t 2 "aoc ls ${day}" ENTER
+                    tmux new-window -n Description -d vim day${day}.txt
+                fi
+                tmux attach -t AOC
+                ;;
+    l|ls|list)  echo "Files for day ${day}:"
+                ls -l day${day}*
+                ;;
+    r|run)    run_scripts
+              ;;
+    t|test)   input=day${day}-testinput
+              run_scripts
+              ;;
+    e|edit)   vim -p $scripts
+              ;;
+    d|descr)  vim day${day}.txt
+              ;;
+    p|pytest) pytest $scripts
+              ;;
+    h|help)   help
+              exit 1
+              ;;
+esac
+
