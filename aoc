@@ -97,15 +97,20 @@ case "$1" in
                     tmux new-session -d -s AOC
                     tmux split-window -t 0 -l 50% -v -d
                     tmux split-window -t 0 -l 50% -h -d
-                    if [ -f day${day}*testinput ] ; then
-                        tmux split-window -t 2 -l 30% -h -d "less -m day${day}*testinput"
+                    if [ -f day${day}.txt ] ; then
+                        tmux split-window -t 2 -l 30% -h -d "less -m day${day}.txt"
                     else
-                        tmux split-window -t 2 -l 30% -h -d "less -m day${day}-input"
+                        tmux split-window -t 2 -l 30% -h -d "vim day${day}.txt"
                     fi
+                    #if [ -f day${day}*testinput ] ; then
+                    #    tmux split-window -t 2 -l 30% -h -d "less -m day${day}*testinput"
+                    #else
+                    #    tmux split-window -t 2 -l 30% -h -d "less -m day${day}-input"
+                    #fi
                     tmux send-keys -t 0 "aoc H" ENTER
                     tmux send-keys -t 1 python3 ENTER
                     tmux send-keys -t 2 "aoc ls ${day}" ENTER
-                    tmux new-window -n Description -d "vim day${day}.txt"
+                    #tmux new-window -n Description -d "vim day${day}.txt"
                 fi
                 tmux attach -t AOC
                 ;;
