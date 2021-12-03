@@ -93,6 +93,9 @@ case "$1" in
                     tmux send-keys -t 1 python3 ENTER
                     tmux send-keys -t 2 "aoc ls ${day}" ENTER
                     tmux new-window -n Description -d vim day${day}.txt
+                    tmux send-keys -t 0 "#" ENTER
+                    tmux send-keys -t 0 "# I'm using 'aoc edit' in this window here" ENTER
+                    tmux send-keys -t 0 "# and 'aoc run' in the window below" ENTER
                 fi
                 tmux attach -t AOC
                 ;;
