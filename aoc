@@ -17,6 +17,15 @@ Usage:  aoc h|help         this help text
 EOF
 }
 
+function ideinfo() {
+    cat <<EOF
+
+I'm using 'aoc edit' in this window/pane here
+and 'aoc run' in the window/pane below
+
+EOF
+}
+
 function run_scripts() {
     echo "---"
     for script in $scripts ; do
@@ -88,14 +97,15 @@ case "$1" in
                     tmux new-session -d -s AOC
                     tmux split-window -t 0 -l 50% -v -d
                     tmux split-window -t 0 -l 50% -h -d
-                    tmux split-window -t 2 -l 30% -h -d less -m day${day}*testinput
-                    tmux send-keys -t 0 aoc ENTER
+                    if [ -f day${day}*testinput ] ; then
+                        tmux split-window -t 2 -l 30% -h -d "less -m day${day}*testinput"
+                    else
+                        tmux split-window -t 2 -l 30% -h -d "less -m day${day}-input"
+                    fi
+                    tmux send-keys -t 0 "aoc H" ENTER
                     tmux send-keys -t 1 python3 ENTER
                     tmux send-keys -t 2 "aoc ls ${day}" ENTER
-                    tmux new-window -n Description -d vim day${day}.txt
-                    tmux send-keys -t 0 "#" ENTER
-                    tmux send-keys -t 0 "# I'm using 'aoc edit' in this window here" ENTER
-                    tmux send-keys -t 0 "# and 'aoc run' in the window below" ENTER
+                    tmux new-window -n Description -d "vim day${day}.txt"
                 fi
                 tmux attach -t AOC
                 ;;
@@ -115,6 +125,9 @@ case "$1" in
               ;;
     h|help)   help
               exit 1
+              ;;
+          H)  help
+              ideinfo
               ;;
 esac
 
