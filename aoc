@@ -17,13 +17,6 @@ Usage:  aoc h|help         this help text
 EOF
 }
 
-
-if [ "$#" -eq 0 ] ; then
-    help
-    exit 1
-fi
-
-
 function run_scripts() {
     echo "---"
     for script in $scripts ; do
@@ -31,6 +24,13 @@ function run_scripts() {
         echo "---"
     done
 }
+
+
+if [ "$#" -eq 0 ] ; then
+    help
+    exit 1
+fi
+
 
 if [ -z "$2" ] ; then
     day=$(date +'%d')
@@ -44,11 +44,35 @@ input=day${day}-input
 
 if [ ! -f "$input" ] ; then
     echo "No input file '$input' found! Probably day ${day} has not been worked at."
-    exit 2
+    echo -e "Please paste the input data into the editor after pressing ENTER now"
+    read inp
+    vim $input
+    if [ ! -f "$input" ] ; then
+        echo "Still no input file found..."
+        exit 2
+    fi
 fi
+
+for scriptidx in a b; do
+    script=day${day}${scriptidx}.py
+    if [ ! -f $script ] ; then
+        cat <<EOF >$script
+#!/usr/bin/env python3
+"""
+Advent of Code. Puzzle ${day}
+"""
+
+import sys
+
+print("todo...")
+
+EOF
+    fi
+done
 
 scripts=$(ls -1 day${day}[ab].py)
 chmod u+x $scripts
+
 
 case "$1" in
     i|ide|tmux) if [[ ! $(type -P tmux) ]] ; then
