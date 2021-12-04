@@ -17,6 +17,7 @@ Usage:  aoc h|help         this help text
 EOF
 }
 
+
 function ideinfo() {
     cat <<EOF
 
@@ -32,6 +33,40 @@ More infos later. Tip: Use fullscreen (C-B z) for pasting.
 EOF
 }
 
+
+function prepare_scripts() {
+    SCRIPT_TEMPLATE=$(cat <<EOF
+#!/usr/bin/env python3
+"""
+Advent of Code. Puzzle ${day}
+"""
+
+import sys
+
+
+def main():
+
+    #lines = (line.rstrip() for line in sys.stdin)
+    print("todo...")
+
+
+if __name__ == "__main__":
+    main()
+
+EOF
+)
+    for scriptidx in a b; do
+        script=day${day}${scriptidx}.py
+        if [ ! -f $script ] ; then
+            echo "$SCRIPT_TEMPLATE" > $script
+        fi
+    done
+
+    scripts=$(ls -1 day${day}[ab].py)
+    chmod u+x $scripts
+}
+
+
 function run_scripts() {
     echo "---"
     for script in $scripts ; do
@@ -40,12 +75,12 @@ function run_scripts() {
     done
 }
 
+#===========================================================================
 
 if [ "$#" -eq 0 ] ; then
     help
     exit 1
 fi
-
 
 if [ -z "$2" ] ; then
     day=$(date +'%d')
@@ -69,34 +104,7 @@ if [ ! -f "$input" ] ; then
     fi
 fi
 
-for scriptidx in a b; do
-    script=day${day}${scriptidx}.py
-    if [ ! -f $script ] ; then
-        cat <<EOF >$script
-#!/usr/bin/env python3
-"""
-Advent of Code. Puzzle ${day}
-"""
-
-import sys
-
-
-def main():
-
-    #lines = (line.rstrip() for line in sys.stdin)
-    print("todo...")
-
-
-if __name__ == "__main__":                                                                                                            │
-    main()
-
-EOF
-    fi
-done
-
-scripts=$(ls -1 day${day}[ab].py)
-chmod u+x $scripts
-
+prepare_scripts
 
 case "$1" in
     i|ide|tmux) if [[ ! $(type -P tmux) ]] ; then
