@@ -15,3 +15,5 @@ Usage:  aoc h|help         this help text
             p|pytest [n]   test today's or given day's script(s) via pytest
             i|ide|tmux     create a simple IDE with the help of tmux
 ```
+
+![aoc3g](aoc3gs.png)
