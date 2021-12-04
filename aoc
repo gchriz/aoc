@@ -28,7 +28,8 @@ If tmux is configured for mouse wheel scrolling you can
 easily scroll the puzzle description below.
 
 Unfortunately copy/pasting within tmux is a bit strange.
-More infos later. Tip: Use fullscreen (C-B z) for pasting.
+More infos later. Tip: Use fullscreen (C-B z) for copying.
+The net has many reports mentioning this topic.
 
 EOF
 }
@@ -136,6 +137,9 @@ case "$1" in
                     fi
                     tmux send-keys -t 2 " python3" ENTER
                     tmux send-keys -t 3 " aoc ls ${day}" ENTER
+                    #tmux new-window -d vi day${day}.txt
+                    # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
+                    sleep 0.1
                 fi
                 tmux attach -t AOC
                 ;;
