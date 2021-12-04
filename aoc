@@ -21,7 +21,10 @@ function ideinfo() {
     cat <<EOF
 
 I'm using 'aoc edit' in this window/pane here
-and 'aoc run' in the window/pane below
+and 'aoc run' in the window/pane bottom-right.
+
+If tmux is configured for mouse wheel scrolling you can
+easily scroll the puzzle description below.
 
 EOF
 }
@@ -73,7 +76,15 @@ Advent of Code. Puzzle ${day}
 
 import sys
 
-print("todo...")
+
+def main():
+
+    #lines = (line.rstrip() for line in sys.stdin)
+    print("todo...")
+
+
+if __name__ == "__main__":                                                                                                            │
+    main()
 
 EOF
     fi
@@ -95,22 +106,17 @@ case "$1" in
                 tmux has-session -t AOC 2>/dev/null
                 if [ $? -ne 0 ] ; then
                     tmux new-session -d -s AOC
-                    tmux split-window -t 0 -l 50% -v -d
                     tmux split-window -t 0 -l 50% -h -d
+                    tmux split-window -t 0 -l 50% -v -d
                     if [ -f day${day}.txt ] ; then
-                        tmux split-window -t 2 -l 30% -h -d "less -m day${day}.txt"
+                        tmux split-window -t 2 -v -d 
                     else
-                        tmux split-window -t 2 -l 30% -h -d "vim day${day}.txt"
+                        tmux split-window -t 2 -v -d "vim day${day}.txt"
                     fi
-                    #if [ -f day${day}*testinput ] ; then
-                    #    tmux split-window -t 2 -l 30% -h -d "less -m day${day}*testinput"
-                    #else
-                    #    tmux split-window -t 2 -l 30% -h -d "less -m day${day}-input"
-                    #fi
                     tmux send-keys -t 0 "aoc H" ENTER
-                    tmux send-keys -t 1 python3 ENTER
-                    tmux send-keys -t 2 "aoc ls ${day}" ENTER
-                    #tmux new-window -n Description -d "vim day${day}.txt"
+                    tmux send-keys -t 1 "cat day${day}.txt" ENTER
+                    tmux send-keys -t 2 python3 ENTER
+                    tmux send-keys -t 3 "aoc ls ${day}" ENTER
                 fi
                 tmux attach -t AOC
                 ;;
