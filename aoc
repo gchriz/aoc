@@ -26,6 +26,9 @@ and 'aoc run' in the window/pane bottom-right.
 If tmux is configured for mouse wheel scrolling you can
 easily scroll the puzzle description below.
 
+Unfortunately copy/pasting within tmux is a bit strange.
+More infos later. Tip: Use fullscreen (C-B z) for pasting.
+
 EOF
 }
 
@@ -59,6 +62,7 @@ if [ ! -f "$input" ] ; then
     echo -e "Please paste the input data into the editor after pressing ENTER now"
     read inp
     vim $input
+    exit 0
     if [ ! -f "$input" ] ; then
         echo "Still no input file found..."
         exit 2
@@ -106,17 +110,24 @@ case "$1" in
                 tmux has-session -t AOC 2>/dev/null
                 if [ $? -ne 0 ] ; then
                     tmux new-session -d -s AOC
-                    tmux split-window -t 0 -l 50% -h -d
-                    tmux split-window -t 0 -l 50% -v -d
+                    # Split window into 4 identical panes.
+                    # Start with a horizontal split to be able
+                    # to more comfortable resize panes later.
+                    tmux split-window -t 0 -h -d
+                    tmux split-window -t 0 -v -d
+                    tmux split-window -t 2 -v -d
+
+                    # There is an optional leading space in the sent commands
+                    # to make them NOT stored in Bash history.
+                    # If configured so there...
+                    tmux send-keys -t 0 " aoc H" ENTER
                     if [ -f day${day}.txt ] ; then
-                        tmux split-window -t 2 -v -d 
+                        tmux send-keys -t 1 " cat day${day}.txt" ENTER
                     else
-                        tmux split-window -t 2 -v -d "vim day${day}.txt"
+                        tmux send-keys -t 1 " vi day${day}.txt" ENTER
                     fi
-                    tmux send-keys -t 0 "aoc H" ENTER
-                    tmux send-keys -t 1 "cat day${day}.txt" ENTER
-                    tmux send-keys -t 2 python3 ENTER
-                    tmux send-keys -t 3 "aoc ls ${day}" ENTER
+                    tmux send-keys -t 2 " python3" ENTER
+                    tmux send-keys -t 3 " aoc ls ${day}" ENTER
                 fi
                 tmux attach -t AOC
                 ;;
