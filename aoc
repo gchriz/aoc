@@ -126,12 +126,43 @@ case "$1" in
                     tmux split-window -t 0 -v -d
                     tmux split-window -t 2 -v -d
 
+                    # I'm starting several programs within the pane(s).
+                    # That can be done via direct call from tmux
+                    # but would close the pane after the program ends.
+                    # Since I would like the panes to retain after exiting
+                    # the individual program tmux just send the keys to
+                    # the shell to start the programs.
+                    # After exiting them the shell remains open.
+
                     # There is an optional leading space in the sent commands
                     # to make them NOT stored in Bash history.
                     # If configured so there...
                     tmux send-keys -t 0 " aoc H" ENTER
+
+                    # The following pane at the bottom/left contains the puzzle description.
+                    #
                     if [ -f day${day}.txt ] ; then
-                        tmux send-keys -t 1 " cat day${day}.txt" ENTER
+                        # Scrolling a longer output text within a tmux pane can be
+                        # done with different means.
+                        #
+                        # 1. There is tmux' own buffering (Copy-mode)
+                        #    Usable via keyboard
+                        # 2. There might be a tmux configuration to do that
+                        #    scrolling in tmux' buffer via mouse wheel
+                        # 3. Any scrolling mechanism of the called command:
+                        #    e.g. 'less'
+                        #    including mouse wheel if possible.
+                        #
+                        # I can't decide yet what version I prefer...
+                        # but since 'less' knows about the mouse-wheel,
+                        # that might be the way to go.
+                        #
+                        # Output via 'cat' makes it possible to scroll via
+                        # tmux copy mode keystrokes or mouse wheel, if configured
+                        #tmux send-keys -t 1 " cat day${day}.txt" ENTER
+                        # or:
+                        # Output via 'less' makes it possible to scroll via "normal" keystroke
+                        tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
                     else
                         tmux send-keys -t 1 " vi day${day}.txt" ENTER
                     fi
