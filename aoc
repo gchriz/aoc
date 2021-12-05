@@ -60,7 +60,7 @@ EOF
         fi
     done
 
-    scripts=$(ls -1 day${day}*.py)
+    scripts=$(ls -1 day${day}*.py day${day}*.sh)
     chmod u+x $scripts
 }
 
