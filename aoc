@@ -24,12 +24,9 @@ function ideinfo() {
 I'm using 'aoc edit' in this window/pane here
 and 'aoc run' in the window/pane bottom-right.
 
-If tmux is configured for mouse wheel scrolling you can
-easily scroll the puzzle description below.
-
-Unfortunately copy/pasting within tmux is a bit strange.
+Unfortunately copy/pasting with tmux is a bit strange.
 More infos later. Tip: Use fullscreen (C-B z) for copying.
-The net has many reports mentioning this topic.
+The net has many reports mentioning this topic...
 
 EOF
 }
@@ -63,7 +60,7 @@ EOF
         fi
     done
 
-    scripts=$(ls -1 day${day}[ab].py)
+    scripts=$(ls -1 day${day}*.py)
     chmod u+x $scripts
 }
 
@@ -74,6 +71,69 @@ function run_scripts() {
         ./$script < $input
         echo "---"
     done
+}
+
+function create_tmux_ide() {
+    # put current directory into PATH to be able to execute aoc without ./
+    export PATH=.:$PATH
+
+    tmux has-session -t AOC 2>/dev/null
+    if [ $? -ne 0 ] ; then
+        tmux new-session -d -s AOC
+        # Split window into 4 identical panes.
+        # Start with a horizontal split to be able
+        # to more comfortable resize panes later.
+        tmux split-window -t 0 -h -d
+        tmux split-window -t 0 -v -d
+        tmux split-window -t 2 -v -d
+
+        # I'm starting several programs within the pane(s).
+        # That can be done via direct call from tmux
+        # but would close the pane after the program ends.
+        # Since I would like the panes to retain after exiting
+        # the individual program tmux just send the keys to
+        # the shell to start the programs.
+        # After exiting them the shell remains open.
+
+        # There is an optional leading space in the sent commands
+        # to make them NOT stored in Bash history.
+        # If configured so there...
+        tmux send-keys -t 0 " aoc H" ENTER
+
+        # The following pane at the bottom/left contains the puzzle description.
+        #
+        if [ -f day${day}.txt ] ; then
+            # Scrolling a longer output text within a tmux pane can be
+            # done with different means.
+            #
+            # 1. There is tmux' own buffering (Copy-mode)
+            #    Usable via keyboard
+            # 2. There might be a tmux configuration to do that
+            #    scrolling in tmux' buffer via mouse wheel
+            # 3. Any scrolling mechanism of the called command:
+            #    e.g. 'less'
+            #    including mouse wheel if possible.
+            #
+            # I can't decide yet what version I prefer...
+            # but since 'less' knows about the mouse-wheel,
+            # that might be the way to go.
+            #
+            # Output via 'cat' makes it possible to scroll via
+            # tmux copy mode keystrokes or mouse wheel, if configured
+            #tmux send-keys -t 1 " cat day${day}.txt" ENTER
+            # or:
+            # Output via 'less' makes it possible to scroll via "normal" keystroke
+            tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
+        else
+            tmux send-keys -t 1 " vi day${day}.txt" ENTER
+        fi
+        tmux send-keys -t 2 " python3" ENTER
+        tmux send-keys -t 3 " aoc ls ${day}" ENTER
+        #tmux new-window -d vi day${day}.txt
+        # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
+        sleep 0.1
+    fi
+    tmux attach -t AOC
 }
 
 #===========================================================================
@@ -98,11 +158,7 @@ if [ ! -f "$input" ] ; then
     echo -e "Please paste the input data into the editor after pressing ENTER now"
     read inp
     vim $input
-    exit 0
-    if [ ! -f "$input" ] ; then
-        echo "Still no input file found..."
-        exit 2
-    fi
+    exit 2
 fi
 
 prepare_scripts
@@ -113,86 +169,26 @@ case "$1" in
                     echo "Can't create the IDE..."
                     exit 3
                 fi
-                # put current directory into PATH to be able to execute aoc without ./
-                export PATH=.:$PATH
-
-                tmux has-session -t AOC 2>/dev/null
-                if [ $? -ne 0 ] ; then
-                    tmux new-session -d -s AOC
-                    # Split window into 4 identical panes.
-                    # Start with a horizontal split to be able
-                    # to more comfortable resize panes later.
-                    tmux split-window -t 0 -h -d
-                    tmux split-window -t 0 -v -d
-                    tmux split-window -t 2 -v -d
-
-                    # I'm starting several programs within the pane(s).
-                    # That can be done via direct call from tmux
-                    # but would close the pane after the program ends.
-                    # Since I would like the panes to retain after exiting
-                    # the individual program tmux just send the keys to
-                    # the shell to start the programs.
-                    # After exiting them the shell remains open.
-
-                    # There is an optional leading space in the sent commands
-                    # to make them NOT stored in Bash history.
-                    # If configured so there...
-                    tmux send-keys -t 0 " aoc H" ENTER
-
-                    # The following pane at the bottom/left contains the puzzle description.
-                    #
-                    if [ -f day${day}.txt ] ; then
-                        # Scrolling a longer output text within a tmux pane can be
-                        # done with different means.
-                        #
-                        # 1. There is tmux' own buffering (Copy-mode)
-                        #    Usable via keyboard
-                        # 2. There might be a tmux configuration to do that
-                        #    scrolling in tmux' buffer via mouse wheel
-                        # 3. Any scrolling mechanism of the called command:
-                        #    e.g. 'less'
-                        #    including mouse wheel if possible.
-                        #
-                        # I can't decide yet what version I prefer...
-                        # but since 'less' knows about the mouse-wheel,
-                        # that might be the way to go.
-                        #
-                        # Output via 'cat' makes it possible to scroll via
-                        # tmux copy mode keystrokes or mouse wheel, if configured
-                        #tmux send-keys -t 1 " cat day${day}.txt" ENTER
-                        # or:
-                        # Output via 'less' makes it possible to scroll via "normal" keystroke
-                        tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
-                    else
-                        tmux send-keys -t 1 " vi day${day}.txt" ENTER
-                    fi
-                    tmux send-keys -t 2 " python3" ENTER
-                    tmux send-keys -t 3 " aoc ls ${day}" ENTER
-                    #tmux new-window -d vi day${day}.txt
-                    # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
-                    sleep 0.1
-                fi
-                tmux attach -t AOC
+                create_tmux_ide
                 ;;
     l|ls|list)  echo "Files for day ${day}:"
                 ls -l day${day}*
                 ;;
-    r|run)    run_scripts
-              ;;
-    t|test)   input=day${day}-testinput
-              run_scripts
-              ;;
-    e|edit)   vim -p $scripts
-              ;;
-    d|descr)  vim day${day}.txt
-              ;;
-    p|pytest) pytest $scripts
-              ;;
-    h|help)   help
-              exit 1
-              ;;
-          H)  help
-              ideinfo
-              ;;
+    r|run)      run_scripts
+                ;;
+    t|test)     input=day${day}-testinput
+                run_scripts
+                ;;
+    e|edit)     vim -p $scripts
+                ;;
+    d|descr)    vim day${day}.txt
+                ;;
+    p|pytest)   pytest $scripts
+                ;;
+    h|help)     help
+                ;;
+          H)    help
+                ideinfo
+                ;;
 esac
 
