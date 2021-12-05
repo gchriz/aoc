@@ -60,16 +60,16 @@ EOF
         fi
     done
 
-    scripts=$(ls -1 day${day}*.py day${day}*.sh)
+    scripts=$(ls -1 day${day}*.py day${day}*.sh 2>/dev/null)
     chmod u+x $scripts
 }
 
 
 function run_scripts() {
-    echo "---"
     for script in $scripts ; do
+        echo "--- $script"
         ./$script < $input
-        echo "---"
+        echo ""
     done
 }
 
