@@ -1,0 +1,4 @@
+__pycache__/*
+day[0-9]*
+input*
+workimages/*

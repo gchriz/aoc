@@ -65,10 +65,23 @@ EOF
 }
 
 
+function check_for_input() {
+    if [ ! -f "$1" ] ; then
+        echo "No input file '$1' found! Probably day ${day} has not been worked at."
+        echo "Please download the user input and save it as file '$1' or"
+        echo -e "paste the input data into the editor after pressing ENTER right now"
+        read inp
+        vim -c 'set paste | startinsert' $1
+        return 1
+    fi
+}
+
 function run_scripts() {
+    check_for_input $1 || return 1
+    chmod u+x $scripts
     for script in $scripts ; do
         echo "--- $script"
-        ./$script < $input
+        ./$script < $1
         echo ""
     done
 }
@@ -151,16 +164,6 @@ else
     printf -v day "%02i" ${2##*0}
 fi
 
-input=day${day}-input
-
-if [ ! -f "$input" ] ; then
-    echo "No input file '$input' found! Probably day ${day} has not been worked at."
-    echo -e "Please paste the input data into the editor after pressing ENTER now"
-    read inp
-    vim $input
-    exit 2
-fi
-
 prepare_scripts
 
 case "$1" in
@@ -174,10 +177,9 @@ case "$1" in
     l|ls|list)  echo "Files for day ${day}:"
                 ls -l day${day}*
                 ;;
-    r|run)      run_scripts
+    r|run)      run_scripts day${day}-input
                 ;;
-    t|test)     input=day${day}-testinput
-                run_scripts
+    t|test)     run_scripts day${day}-testinput
                 ;;
     e|edit)     vim -p $scripts
                 ;;
