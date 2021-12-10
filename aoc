@@ -53,12 +53,10 @@ if __name__ == "__main__":
 
 EOF
 )
-    for scriptidx in a b; do
-        script=day${day}${scriptidx}.py
-        if [ ! -f $script ] ; then
-            echo "$SCRIPT_TEMPLATE" > $script
-        fi
-    done
+    script=day${day}a.py
+    if [ ! -f $script ] ; then
+        echo "$SCRIPT_TEMPLATE" > $script
+    fi
 
     scripts=$(ls -1 day${day}*.py day${day}*.sh 2>/dev/null)
     chmod u+x $scripts
