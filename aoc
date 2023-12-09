@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#{
+
 function help() {
     cat << EOF
 
@@ -25,15 +27,19 @@ I'm using 'aoc edit' in this window/pane here
 and 'aoc run' in the window/pane bottom-right.
 
 Unfortunately copy/pasting with tmux is a bit strange.
-More infos later. Tip: Use fullscreen (C-B z) for copying.
+More infos later. Tip: Use fullscreen (prefix z) for copying.
 The net has many reports mentioning this topic...
+
+You might want to execute
+    eval "\$(tmux showenv -gs HISTIGNORE)"
+in every shell window first...
 
 EOF
 }
 
 
-function prepare_scripts() {
-    SCRIPT_TEMPLATE=$(cat <<EOF
+function fill_script_template() {
+SCRIPT_TEMPLATE=$(cat <<EOF
 #!/usr/bin/env python3
 """
 Advent of Code. Puzzle ${day}
@@ -45,6 +51,19 @@ import sys
 def main():
 
     #lines = (line.rstrip() for line in sys.stdin)
+
+    datafile = "day${day}-input"
+    try:
+        if sys.argv[1] == "-t":
+            datafile = "day${day}-testinput"
+    except IndexError:
+        pass
+
+    with open(datafile, "r") as f:
+        lines = (line.rstrip() for line in f.readlines())
+
+    #print(type(lines))   # <class 'generator'>
+
     print("todo...")
 
 
@@ -53,12 +72,30 @@ if __name__ == "__main__":
 
 EOF
 )
-    script=day${day}a.py
-    if [ ! -f $script ] ; then
-        echo "$SCRIPT_TEMPLATE" > $script
-    fi
+}
 
-    scripts=$(ls -1 day${day}*.py day${day}*.sh 2>/dev/null)
+
+TEMPLATE_SCRIPT=day00.py
+
+function prepare_template_script() {
+   if [ ! -f $TEMPLATE_SCRIPT ] ; then
+      echo "$SCRIPT_TEMPLATE" > $TEMPLATE_SCRIPT
+   fi
+}
+
+function prepare_scripts() {
+    for script in day${day}.py ; do
+        # ... day${day}b.py ; do
+        if [ ! -f $script ] ; then
+           if [ -f $TEMPLATE_SCRIPT ] ; then
+              cp $TEMPLATE_SCRIPT $script
+           else
+              echo "$SCRIPT_TEMPLATE" > $script
+           fi
+        fi
+    done
+
+    scripts=$(ls -1 day${day}.py day${day}.sh day${day}?.py day${day}?.sh 2>/dev/null)
     chmod u+x $scripts
 }
 
@@ -75,28 +112,40 @@ function check_for_input() {
 }
 
 function run_scripts() {
-    check_for_input $1 || return 1
+    #check_for_input $1 || return 1
     chmod u+x $scripts
     for script in $scripts ; do
         echo "--- $script"
-        ./$script < $1
+        #./$script < "$1"
+        ./$script $1
         echo ""
     done
 }
 
 function create_tmux_ide() {
     # put current directory into PATH to be able to execute aoc without ./
-    export PATH=.:$PATH
+    #export PATH=.:$PATH
+    # The following doesn't survive completely, because .bashc overwrites it on tmux's bash invocation below
+    export HISTIGNORE="aoc*:vi aoc:${HISTIGNORE}"
+    # but it ends in tmux's environmnt and can be eval'ed from there. See usage above.
+    # Changing .bashrc to append to HISTIGNORE instead of setting it would help, but double HISTIGORE on every invocation...
 
     tmux has-session -t AOC 2>/dev/null
     if [ $? -ne 0 ] ; then
         tmux new-session -d -s AOC
         # Split window into 4 identical panes.
-        # Start with a horizontal split to be able
+        #
+        ## Start with a horizontal split to be able
+        ## to more comfortable resize panes later.
+        #tmux split-window -t 1 -h -d
+        #tmux split-window -t 1 -v -d
+        #tmux split-window -t 3 -v -d
+
+        # Start with a vertical split to be able
         # to more comfortable resize panes later.
-        tmux split-window -t 0 -h -d
-        tmux split-window -t 0 -v -d
-        tmux split-window -t 2 -v -d
+        tmux split-window -t 1 -v -d
+        tmux split-window -t 1 -h -d
+        tmux split-window -t 3 -h -d
 
         # I'm starting several programs within the pane(s).
         # That can be done via direct call from tmux
@@ -109,7 +158,7 @@ function create_tmux_ide() {
         # There is an optional leading space in the sent commands
         # to make them NOT stored in Bash history.
         # If configured so there...
-        tmux send-keys -t 0 " aoc H" ENTER
+        tmux send-keys -t 1 " aoc H" ENTER
 
         # The following pane at the bottom/left contains the puzzle description.
         #
@@ -134,12 +183,12 @@ function create_tmux_ide() {
             #tmux send-keys -t 1 " cat day${day}.txt" ENTER
             # or:
             # Output via 'less' makes it possible to scroll via "normal" keystroke
-            tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
+            tmux send-keys -t 3 " less -m --mouse day${day}.txt" ENTER
         else
-            tmux send-keys -t 1 " vi day${day}.txt" ENTER
+            tmux send-keys -t 3 " vi day${day}.txt" ENTER
         fi
-        tmux send-keys -t 2 " python3" ENTER
-        tmux send-keys -t 3 " aoc ls ${day}" ENTER
+        tmux send-keys -t 2 " aoc ls ${day}" ENTER
+        tmux send-keys -t 4 " python3" ENTER
         #tmux new-window -d vi day${day}.txt
         # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
         sleep 0.1
@@ -148,6 +197,23 @@ function create_tmux_ide() {
 }
 
 #===========================================================================
+#set -x
+#TODO: How to make it automatic?
+#export HISTIGNORE="aoc*:vi aoc:${HISTIGNORE}"
+## now in 'cdp'
+#export PATH=.:$PATH
+
+# this happens if called from cdp as '. aoc' , but why????
+if [ "$1" == "." -o "$1" == "source" ] ; then
+    help
+    return
+fi
+
+if [ "$0" == "/bin/bash" ] ; then
+    help
+    return
+fi
+#echo "0 = $0"
 
 if [ "$#" -eq 0 ] ; then
     help
@@ -160,24 +226,27 @@ else
     # leading zeros are eliminated from input (due to octal system trap...)
     # but there is no additional error checking yet (1..24, no-number etc.)
     printf -v day "%02i" ${2##*0}
+    #day=$2
 fi
 
+fill_script_template
+prepare_template_script
 prepare_scripts
 
 case "$1" in
     i|ide|tmux) if [[ ! $(type -P tmux) ]] ; then
                     echo "tmux doesn't seem to be installed!"
                     echo "Can't create the IDE..."
-                    exit 3
+                else
+                    create_tmux_ide
                 fi
-                create_tmux_ide
                 ;;
     l|ls|list)  echo "Files for day ${day}:"
                 ls -l day${day}*
                 ;;
     r|run)      run_scripts day${day}-input
                 ;;
-    t|test)     run_scripts day${day}-testinput
+    t|test)     run_scripts # -t # day${day}${3}-testinput
                 ;;
     e|edit)     vim -p $scripts
                 ;;
@@ -192,3 +261,5 @@ case "$1" in
                 ;;
 esac
 
+#exit;
+#}
