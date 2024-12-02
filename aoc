@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-#{
+{
 
 function help() {
     cat << EOF
@@ -24,7 +24,7 @@ function ideinfo() {
     cat <<EOF
 
 I'm using 'aoc edit' in this window/pane here
-and 'aoc run' in the window/pane bottom-right.
+and 'aoc run' in the window/pane top-right.
 
 Unfortunately copy/pasting with tmux is a bit strange.
 More infos later. Tip: Use fullscreen (prefix z) for copying.
@@ -42,29 +42,51 @@ function fill_script_template() {
 SCRIPT_TEMPLATE=$(cat <<EOF
 #!/usr/bin/env python3
 """
-Advent of Code. Puzzle ${day}
+Advent of Code ${year} - Puzzle ${day}
 """
 
 import sys
+from pathlib import Path
+
+
+is_test = False
+
+def get_data():
+
+    global is_test
+
+    ## from stdin:
+    # lines = (line.rstrip() for line in sys.stdin)
+
+    ## or from defined filenames:
+    datafile = Path("day${day}-input")
+    try:
+        if sys.argv[1] == "-t":
+            datafile = Path("day${day}-testinput")
+            is_test = True
+    except IndexError:
+        pass
+
+    return datafile.read_text().rstrip("").split("\n")
 
 
 def main():
 
-    #lines = (line.rstrip() for line in sys.stdin)
+    lines = get_data()
 
-    datafile = "day${day}-input"
-    try:
-        if sys.argv[1] == "-t":
-            datafile = "day${day}-testinput"
-    except IndexError:
-        pass
+    if is_test:
+        print("    TEST MODE")
 
-    with open(datafile, "r") as f:
-        lines = (line.rstrip() for line in f.readlines())
+    print("\n***Part one ***\n")
 
-    #print(type(lines))   # <class 'generator'>
+    sum = 0
+    print(sum)
 
-    print("todo...")
+
+    print("\n***Part two ***\n")
+
+    sum = 0
+    print(sum)
 
 
 if __name__ == "__main__":
@@ -124,7 +146,7 @@ function run_scripts() {
 
 function create_tmux_ide() {
     # put current directory into PATH to be able to execute aoc without ./
-    #export PATH=.:$PATH
+    export PATH=.:$PATH
     # The following doesn't survive completely, because .bashc overwrites it on tmux's bash invocation below
     export HISTIGNORE="aoc*:vi aoc:${HISTIGNORE}"
     # but it ends in tmux's environmnt and can be eval'ed from there. See usage above.
@@ -133,6 +155,10 @@ function create_tmux_ide() {
     tmux has-session -t AOC 2>/dev/null
     if [ $? -ne 0 ] ; then
         tmux new-session -d -s AOC
+        tmux set -g base-index 1
+        tmux set -g pane-base-index 1
+        tmux set-window-option -g pane-base-index 1
+
         # Split window into 4 identical panes.
         #
         ## Start with a horizontal split to be able
@@ -162,7 +188,7 @@ function create_tmux_ide() {
 
         # The following pane at the bottom/left contains the puzzle description.
         #
-        if [ -f day${day}.txt ] ; then
+        if false ; then   ### [ -f day${day}.txt ] ; then
             # Scrolling a longer output text within a tmux pane can be
             # done with different means.
             #
@@ -229,9 +255,12 @@ else
     #day=$2
 fi
 
+year=$(date +'%Y')
+
 fill_script_template
-prepare_template_script
+#prepare_template_script
 prepare_scripts
+
 
 case "$1" in
     i|ide|tmux) if [[ ! $(type -P tmux) ]] ; then
@@ -246,7 +275,7 @@ case "$1" in
                 ;;
     r|run)      run_scripts day${day}-input
                 ;;
-    t|test)     run_scripts # -t # day${day}${3}-testinput
+    t|test)     run_scripts -t # day${day}${3}-testinput
                 ;;
     e|edit)     vim -p $scripts
                 ;;
@@ -261,5 +290,5 @@ case "$1" in
                 ;;
 esac
 
-#exit;
-#}
+exit;
+}
