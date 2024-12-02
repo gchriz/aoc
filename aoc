@@ -24,13 +24,13 @@ function ideinfo() {
     cat <<EOF
 
 I'm using 'aoc edit' in this window/pane here
-and 'aoc run' in the window/pane top-right.
+and 'aoc run' etc. in the window/pane to the right.
 
 Unfortunately copy/pasting with tmux is a bit strange.
 More infos later. Tip: Use fullscreen (prefix z) for copying.
 The net has many reports mentioning this topic...
 
-You might want to execute
+To reduce aoc related entries in .bash_history you might want to execute
     eval "\$(tmux showenv -gs HISTIGNORE)"
 in every shell window first...
 
@@ -39,7 +39,8 @@ EOF
 
 
 function fill_script_template() {
-SCRIPT_TEMPLATE=$(cat <<EOF
+
+SCRIPT_TEMPLATE_PY=$(cat <<EOF
 #!/usr/bin/env python3
 """
 Advent of Code ${year} - Puzzle ${day}
@@ -97,27 +98,12 @@ EOF
 }
 
 
-TEMPLATE_SCRIPT=day00.py
-
-function prepare_template_script() {
-   if [ ! -f $TEMPLATE_SCRIPT ] ; then
-      echo "$SCRIPT_TEMPLATE" > $TEMPLATE_SCRIPT
-   fi
-}
-
 function prepare_scripts() {
-    for script in day${day}.py ; do
-        # ... day${day}b.py ; do
-        if [ ! -f $script ] ; then
-           if [ -f $TEMPLATE_SCRIPT ] ; then
-              cp $TEMPLATE_SCRIPT $script
-           else
-              echo "$SCRIPT_TEMPLATE" > $script
-           fi
-        fi
-    done
+    if [ ! -f day${day}.py ] ; then
+        echo "$SCRIPT_TEMPLATE_PY" > day${day}.py
+    fi
 
-    scripts=$(ls -1 day${day}.py day${day}.sh day${day}?.py day${day}?.sh 2>/dev/null)
+    scripts=$(ls -1 day${day}*.py day${day}*.sh 2>/dev/null)
     chmod u+x $scripts
 }
 
@@ -138,7 +124,6 @@ function run_scripts() {
     chmod u+x $scripts
     for script in $scripts ; do
         echo "--- $script"
-        #./$script < "$1"
         ./$script $1
         echo ""
     done
@@ -150,7 +135,7 @@ function create_tmux_ide() {
     # The following doesn't survive completely, because .bashc overwrites it on tmux's bash invocation below
     export HISTIGNORE="aoc*:vi aoc:${HISTIGNORE}"
     # but it ends in tmux's environmnt and can be eval'ed from there. See usage above.
-    # Changing .bashrc to append to HISTIGNORE instead of setting it would help, but double HISTIGORE on every invocation...
+    # Changing .bashrc to append to HISTIGNORE instead of setting it would help, but doubles HISTIGORE on every invocation...
 
     tmux has-session -t AOC 2>/dev/null
     if [ $? -ne 0 ] ; then
@@ -223,23 +208,14 @@ function create_tmux_ide() {
 }
 
 #===========================================================================
+#TODO: How to make HISTIGNORE automatic? Or shouldn't I?
 #set -x
-#TODO: How to make it automatic?
 #export HISTIGNORE="aoc*:vi aoc:${HISTIGNORE}"
-## now in 'cdp'
-#export PATH=.:$PATH
-
-# this happens if called from cdp as '. aoc' , but why????
-if [ "$1" == "." -o "$1" == "source" ] ; then
-    help
-    return
-fi
 
 if [ "$0" == "/bin/bash" ] ; then
     help
     return
 fi
-#echo "0 = $0"
 
 if [ "$#" -eq 0 ] ; then
     help
@@ -252,15 +228,12 @@ else
     # leading zeros are eliminated from input (due to octal system trap...)
     # but there is no additional error checking yet (1..24, no-number etc.)
     printf -v day "%02i" ${2##*0}
-    #day=$2
 fi
 
 year=$(date +'%Y')
 
 fill_script_template
-#prepare_template_script
 prepare_scripts
-
 
 case "$1" in
     i|ide|tmux) if [[ ! $(type -P tmux) ]] ; then
@@ -273,9 +246,9 @@ case "$1" in
     l|ls|list)  echo "Files for day ${day}:"
                 ls -l day${day}*
                 ;;
-    r|run)      run_scripts day${day}-input
+    r|run)      run_scripts
                 ;;
-    t|test)     run_scripts -t # day${day}${3}-testinput
+    t|test)     run_scripts -t
                 ;;
     e|edit)     vim -p $scripts
                 ;;
