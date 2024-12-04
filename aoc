@@ -68,7 +68,8 @@ def get_data():
     except IndexError:
         pass
 
-    return datafile.read_text().rstrip("").split("\n")
+    data = datafile.read_text().rstrip(" \n").split("\n")
+    return [line.rstrip() for line in data]
 
 
 def main():
