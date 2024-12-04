@@ -24,15 +24,15 @@ function ideinfo() {
     cat <<EOF
 
 I'm using 'aoc edit' in this window/pane here
-and 'aoc run' etc. in the window/pane bottom-right.
+and 'aoc run' etc. in the window/pane to the right.
 
 Unfortunately copy/pasting with tmux is a bit strange.
 More infos later. Tip: Use fullscreen (prefix z) for copying.
 The net has many reports mentioning this topic...
 
-To reduce aoc related entries in .bash_history you might want to execute
+To reduce aoc related entries in .bash_history the following command
     eval "\$(tmux showenv -gs HISTIGNORE)"
-in every shell window first...
+gets executed in both shell windows.
 
 EOF
 }
@@ -103,7 +103,7 @@ function prepare_scripts() {
         echo "$SCRIPT_TEMPLATE_PY" > day${day}.py
     fi
 
-    scripts=$(ls -1 day${day}*.py day${day}*.sh 2>/dev/null)
+    scripts=$(ls -1 day${day}.py day${day}-*.py day${day}.sh day${day}-*.sh 2>/dev/null)
     chmod u+x $scripts
 }
 
@@ -169,7 +169,8 @@ function create_tmux_ide() {
         # There is an optional leading space in the sent commands
         # to make them NOT stored in Bash history.
         # If configured so there...
-        tmux send-keys -t 1 " aoc H" ENTER
+        tmux send-keys -t 3 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
+        tmux send-keys -t 3 " aoc H" ENTER
 
         # The following pane at the bottom/left contains the puzzle description.
         #
@@ -194,11 +195,12 @@ function create_tmux_ide() {
             #tmux send-keys -t 1 " cat day${day}.txt" ENTER
             # or:
             # Output via 'less' makes it possible to scroll via "normal" keystroke
-            tmux send-keys -t 3 " less -m --mouse day${day}.txt" ENTER
+            tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
         else
-            tmux send-keys -t 3 " vi day${day}.txt" ENTER
+            tmux send-keys -t 1 " vi day${day}.txt" ENTER
         fi
         tmux send-keys -t 2 " python3" ENTER
+        tmux send-keys -t 4 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
         tmux send-keys -t 4 " aoc ls ${day}" ENTER
         #tmux new-window -d vi day${day}.txt
         # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
@@ -208,9 +210,6 @@ function create_tmux_ide() {
 }
 
 #===========================================================================
-#TODO: How to make HISTIGNORE automatic? Or shouldn't I?
-#set -x
-#export HISTIGNORE="aoc*:vi aoc:${HISTIGNORE}"
 
 if [ "$0" == "/bin/bash" ] ; then
     help
