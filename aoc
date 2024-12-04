@@ -47,37 +47,16 @@ Advent of Code ${year} - Puzzle ${day}
 """
 
 import sys
-from pathlib import Path
 
 
-is_test = False
+def main(test=False):
 
-def get_data():
-
-    global is_test
-
-    ## from stdin:
-    # lines = (line.rstrip() for line in sys.stdin)
-
-    ## or from defined filenames:
-    datafile = Path("day${day}-input")
-    try:
-        if sys.argv[1] == "-t":
-            datafile = Path("day${day}-testinput")
-            is_test = True
-    except IndexError:
-        pass
-
-    data = datafile.read_text().rstrip(" \n").split("\n")
-    return [line.rstrip() for line in data]
-
-
-def main():
-
-    lines = get_data()
+    lines = [line.rstrip() for line in sys.stdin]
 
     if is_test:
         print("    TEST MODE")
+        for line in lines:
+            print(line)
 
     print("\n***Part one ***\n")
 
@@ -92,7 +71,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+
+    is_test = False
+    try:
+        if sys.argv[1] == "-t":
+            is_test = True
+    except IndexError:
+        pass
+
+    main(test=is_test)
 
 EOF
 )
@@ -109,23 +96,15 @@ function prepare_scripts() {
 }
 
 
-function check_for_input() {
-    if [ ! -f "$1" ] ; then
-        echo "No input file '$1' found! Probably day ${day} has not been worked at."
-        echo "Please download the user input and save it as file '$1' or"
-        echo -e "paste the input data into the editor after pressing ENTER right now"
-        read inp
-        vim -c 'set paste | startinsert' $1
-        return 1
-    fi
-}
-
 function run_scripts() {
-    #check_for_input $1 || return 1
     chmod u+x $scripts
     for script in $scripts ; do
         echo "--- $script"
-        ./$script $1
+        if [[ "$1" == "-t" ]] ; then
+            ./$script -t < $2
+        else
+            ./$script < $1
+        fi
         echo ""
     done
 }
@@ -212,10 +191,11 @@ function create_tmux_ide() {
 
 #===========================================================================
 
-if [ "$0" == "/bin/bash" ] ; then
-    help
-    return
-fi
+## TODO: handle execution via source
+#if [ "$0" == "/bin/bash" ] ; then
+#    help
+#    return
+#fi
 
 if [ "$#" -eq 0 ] ; then
     help
@@ -246,9 +226,9 @@ case "$1" in
     l|ls|list)  echo "Files for day ${day}:"
                 ls -l day${day}*
                 ;;
-    r|run)      run_scripts
+    r|run)      run_scripts    day${day}-input
                 ;;
-    t|test)     run_scripts -t
+    t|test)     run_scripts -t day${day}-testinput
                 ;;
     e|edit)     vim -p $scripts
                 ;;
@@ -260,6 +240,10 @@ case "$1" in
                 ;;
           H)    help
                 ideinfo
+                ;;
+          *)    echo "Error: Missing argument(s)!"
+                echo ""
+                help
                 ;;
 esac
 
