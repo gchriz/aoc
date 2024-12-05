@@ -191,12 +191,6 @@ function create_tmux_ide() {
 
 #===========================================================================
 
-## TODO: handle execution via source
-#if [ "$0" == "/bin/bash" ] ; then
-#    help
-#    return
-#fi
-
 if [ "$#" -eq 0 ] ; then
     help
     exit 1
@@ -247,5 +241,12 @@ case "$1" in
                 ;;
 esac
 
-exit;
+
+## don't call exit when executed via source
+### TODO: check carefully
+if [[ $0 =~ [-/^]bash$ ]] ; then
+    echo "Don't source the script, just call it normally."
+else
+    exit 0;
+fi
 }
