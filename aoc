@@ -49,25 +49,45 @@ Advent of Code ${year} - Puzzle ${day}
 import sys
 
 
-def main(test=False):
+EXAMPLE_LINES = """\
+""".splitlines()
 
-    lines = [line.rstrip() for line in sys.stdin]
+EXAMPLE_SOLUTIONS = (None, None)
+
+
+def check_testsum(result, part=1):
+    if result != EXAMPLE_SOLUTIONS[part-1]:
+        print("Solution for EXAMPLE_LINES is not yet correct! Expected:", EXAMPLE_SOLUTIONS[part-1])
+
+
+def main(is_test=False):
+
+    if is_test:
+        lines = EXAMPLE_LINES
+    else:
+        lines = [line.rstrip() for line in sys.stdin]
 
     if is_test:
         print("    TEST MODE")
         for line in lines:
             print(line)
 
-    print("\n***Part one ***\n")
+    print("\n*** Part one ***\n")
 
     sum = 0
-    print(sum)
+    ...
+    print("Result:", sum)
+    if is_test:
+        check_testsum(sum, part=1)
 
 
-    print("\n***Part two ***\n")
+    print("\n*** Part two ***\n")
 
     sum = 0
-    print(sum)
+    ...
+    print("Result:", sum)
+    if is_test:
+        check_testsum(sum, part=2)
 
 
 if __name__ == "__main__":
@@ -79,7 +99,7 @@ if __name__ == "__main__":
     except IndexError:
         pass
 
-    main(test=is_test)
+    main(is_test=is_test)
 
 EOF
 )
@@ -101,7 +121,7 @@ function run_scripts() {
     for script in $scripts ; do
         echo "--- $script"
         if [[ "$1" == "-t" ]] ; then
-            ./$script -t < $2
+            ./$script -t
         else
             ./$script < $1
         fi
@@ -222,7 +242,7 @@ case "$1" in
                 ;;
     r|run)      run_scripts    day${day}-input
                 ;;
-    t|test)     run_scripts -t day${day}-testinput
+    t|test)     run_scripts -t   # EXAMPLE_LINES are directly in the respective script now!
                 ;;
     e|edit)     vim -p $scripts
                 ;;
