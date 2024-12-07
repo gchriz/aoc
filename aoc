@@ -49,7 +49,7 @@ Advent of Code ${year} - Puzzle ${day}
 import sys
 
 
-EXAMPLE_LINES = """\
+EXAMPLE_LINES = """\\
 """.splitlines()
 
 EXAMPLE_SOLUTIONS = (None, None)
