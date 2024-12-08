@@ -32,7 +32,7 @@ The net has many reports mentioning this topic...
 
 To reduce aoc related entries in .bash_history the following command
     eval "\$(tmux showenv -gs HISTIGNORE)"
-gets executed in both shell windows.
+gets executed in all four shell windows.
 
 EOF
 }
@@ -169,6 +169,8 @@ function create_tmux_ide() {
         tmux send-keys -t 3 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
         tmux send-keys -t 3 " aoc H" ENTER
 
+        tmux send-keys -t 1 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
+
         # The following pane at the bottom/left contains the puzzle description.
         #
         if false ; then   ### [ -f day${day}.txt ] ; then
@@ -196,6 +198,7 @@ function create_tmux_ide() {
         else
             tmux send-keys -t 1 " vi day${day}.txt" ENTER
         fi
+        tmux send-keys -t 2 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
         tmux send-keys -t 2 " python3" ENTER
         tmux send-keys -t 4 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
         tmux send-keys -t 4 " aoc ls ${day}" ENTER
