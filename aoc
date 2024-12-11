@@ -112,7 +112,8 @@ function prepare_scripts() {
         echo "$SCRIPT_TEMPLATE_PY" > day${day}.py
     fi
 
-    scripts=$(ls -1 day${day}.py day${day}-*.py day${day}.sh day${day}-*.sh 2>/dev/null)
+    #scripts=$(ls -1 day${day}.py day${day}-*.py day${day}.sh day${day}-*.sh 2>/dev/null)
+    scripts=$(ls -1 day${day}.py 2>/dev/null)
     chmod u+x $scripts
 }
 
