@@ -11,6 +11,7 @@ Usage:  aoc h|help         this help text
             l|ls|list [n]  list today's or given day's file(s)
             d|descr [n]    edit today's or given day's description file
             e|edit [n]     edit today's or given day's script(s)
+            de|ed [n]      edit today's or given day's description file and scripts
             r|run [n]      run  today's or given day's script(s)
             t|test [n]     test today's or given day's script(s) with test-input
             p|pytest [n]   test today's or given day's script(s) via pytest
@@ -23,8 +24,7 @@ EOF
 function ideinfo() {
     cat <<EOF
 
-I'm using 'aoc edit' in this window/pane here
-and 'aoc run' etc. in the window/pane to the right.
+I'm using 'aoc run' in this window/pane here.
 
 Unfortunately copy/pasting with tmux is a bit strange.
 More infos later. Tip: Use fullscreen (prefix z) for copying.
@@ -32,7 +32,7 @@ The net has many reports mentioning this topic...
 
 To reduce aoc related entries in .bash_history the following command
     eval "\$(tmux showenv -gs HISTIGNORE)"
-gets executed in all four shell windows.
+gets executed in all three shell windows.
 
 EOF
 }
@@ -142,19 +142,10 @@ function create_tmux_ide() {
         tmux set -g pane-base-index 1
         tmux set-window-option -g pane-base-index 1
 
-        # Split window into 4 identical panes.
+        # Split window into 3 panes. One big to the left and two smaller ones to the right.
         #
-        ## Start with a horizontal split to be able
-        ## to more comfortable resize panes later.
-        #tmux split-window -t 1 -h -d
-        #tmux split-window -t 1 -v -d
-        #tmux split-window -t 3 -v -d
-
-        # Start with a vertical split to be able
-        # to more comfortable resize panes later.
-        tmux split-window -t 1 -v -d
         tmux split-window -t 1 -h -d
-        tmux split-window -t 3 -h -d
+        tmux split-window -t 2 -v -d
 
         # I'm starting several programs within the pane(s).
         # That can be done via direct call from tmux
@@ -167,14 +158,18 @@ function create_tmux_ide() {
         # There is an optional leading space in the sent commands
         # to make them NOT stored in Bash history.
         # If configured so there...
+
+        tmux send-keys -t 1 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
+        tmux send-keys -t 1 " aoc de" ENTER
+
+        tmux send-keys -t 2 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
+        tmux send-keys -t 2 " python3" ENTER
+
         tmux send-keys -t 3 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
         tmux send-keys -t 3 " aoc H" ENTER
 
-        tmux send-keys -t 1 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
-
-        # The following pane at the bottom/left contains the puzzle description.
+        # The left pane contains the editor with the puzzle description and the source code.
         #
-        if false ; then   ### [ -f day${day}.txt ] ; then
             # Scrolling a longer output text within a tmux pane can be
             # done with different means.
             #
@@ -195,15 +190,10 @@ function create_tmux_ide() {
             #tmux send-keys -t 1 " cat day${day}.txt" ENTER
             # or:
             # Output via 'less' makes it possible to scroll via "normal" keystroke
-            tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
-        else
-            tmux send-keys -t 1 " vi day${day}.txt" ENTER
-        fi
-        tmux send-keys -t 2 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
-        tmux send-keys -t 2 " python3" ENTER
-        tmux send-keys -t 4 ' eval "$(tmux showenv -gs HISTIGNORE)"' ENTER
-        tmux send-keys -t 4 " aoc ls ${day}" ENTER
-        #tmux new-window -d vi day${day}.txt
+
+            # tmux send-keys -t 1 " less -m --mouse day${day}.txt" ENTER
+
+
         # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
         sleep 0.1
     fi
@@ -222,7 +212,9 @@ if [ -z "$2" ] ; then
 else
     # leading zeros are eliminated from input (due to octal system trap...)
     # but there is no additional error checking yet (1..24, no-number etc.)
-    printf -v day "%02i" ${2##*0}
+    # My original attempt via ${2##0} and variants didn't work. All 0's were removed...
+    # https://stackoverflow.com/questions/11123717/removing-leading-zeros-before-passing-a-shell-variable-to-another-command
+    printf -v day "%02i" $((10#$2))
 fi
 
 year=$(date +'%Y')
@@ -248,6 +240,8 @@ case "$1" in
     e|edit)     vim -p $scripts
                 ;;
     d|descr)    vim day${day}.txt
+                ;;
+    de|de)      vim -o day${day}.txt  $scripts
                 ;;
     p|pytest)   pytest $scripts
                 ;;
