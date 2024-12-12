@@ -241,7 +241,7 @@ case "$1" in
                 ;;
     d|descr)    vim day${day}.txt
                 ;;
-    de|de)      vim -o day${day}.txt  $scripts
+    de|ed)      vim -o day${day}.txt  $scripts
                 ;;
     p|pytest)   pytest $scripts
                 ;;
