@@ -135,9 +135,9 @@ function create_tmux_ide() {
     # but it ends in tmux's environmnt and can be eval'ed from there. See usage above.
     # Changing .bashrc to append to HISTIGNORE instead of setting it would help, but doubles HISTIGORE on every invocation...
 
-    tmux has-session -t AOC 2>/dev/null
+    tmux has-session -t AoC 2>/dev/null
     if [ $? -ne 0 ] ; then
-        tmux new-session -d -s AOC
+        tmux new-session -d -s AoC
         tmux set -g base-index 1
         tmux set -g pane-base-index 1
         tmux set-window-option -g pane-base-index 1
@@ -197,7 +197,7 @@ function create_tmux_ide() {
         # wait a moment to avoid a vim (etc.) bug(?) not receiving WINCH signal correctly
         sleep 0.1
     fi
-    tmux attach -t AOC
+    tmux attach -t AoC
 }
 
 #===========================================================================
